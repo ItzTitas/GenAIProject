@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent Acquisition Assistant</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            background: #1e1e1e;
+            color: white;
+            padding: 15px 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            width: 100%;
+            text-align: left;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #1e1e1e;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar button {
+            background: #ff6f00;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .sidebar button:hover {
+            background: #e65c00;
+        }
+
+        .sidebar button:active {
+            transform: scale(0.95);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .section {
+            display: none;
+            width: 100%;
+            max-width: 700px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #chatbox {
+            flex-grow: 1;
+            overflow-y: auto;
+            border-radius: 4px;
+            padding: 10px;
+            background: #222;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-input {
+            display: flex;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .chat-input input {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .chat-input button {
+            background: #ff6f00;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            background: #e65c00;
+        }
+
+        .code-block {
+            background: #333;
+            color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff6f00;
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.3s ease;
+        }
+
+        .copy-button:hover {
+            background-color: #e65c00;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: #ff6f00;
+            color: white;
+            margin-left: auto;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background: #333;
+            color: white;
+            margin-right: auto;
+            align-self: flex-start;
+        }
+
+        .error-message {
+            background: #ff3333;
+            color: white;
+            text-align: center;
+            margin: 10px auto;
+        }
+
+        .system-message {
+            background: #444;
+            color: #aaa;
+            text-align: center;
+            font-size: 0.9rem;
+            padding: 8px;
+            margin: 10px auto;
+            border-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .candidate-list {
+            margin-top: 20px;
+        }
+
+        .candidate-card {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .status-badge.new {
+            background: #ff6f00;
+        }
+
+        .status-badge.interview-scheduled {
+            background: #4caf50;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .metrics-container {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card h3 {
+            margin-bottom: 10px;
+            font-size: 1rem;
+            color: #ccc;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6f00;
+        }
+
+        .charts-container {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .chart-card h3 {
+            margin-bottom: 15px;
+        }
+
+        .activity-card {
+            grid-column: 1 / -1;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .activity-card h3 {
+            margin-bottom: 15px;
+        }
+
+        #activityList {
+            list-style-type: none;
+        }
+
+        #activityList li {
+            padding: 10px 0;
+            border-bottom: 1px solid #444;
+        }
+
+        #activityList li:last-child {
+            border-bottom: none;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .refresh-btn {
+            background: #333;
+            color: #ff6f00;
+            border: 1px solid #ff6f00;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #ff6f00;
+            color: white;
+        }
+
+        .candidate-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            flex-grow: 1;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .filter-options select {
+            padding: 8px 12px;
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .activity-text {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .activity-meta {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .candidate-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .scheduler-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .calendar-view {
+            flex: 2;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .interview-list {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        #calendar {
+            height: 500px;
+        }
+
+        .interview-card {
+            background: #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 3px solid #ff6f00;
+        }
+
+        .scheduler-controls {
+            margin-bottom: 20px;
+        }
+
+        .fc-event {
+            cursor: pointer;
+            background-color: #ff6f00;
+            border: none;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://kit.fontawesome.com/4a7f44a380.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <header>Talent Acquisition Assistant</header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <button onclick="openSection('dashboard')">Dashboard</button>
+            <button onclick="openSection('candidates')">Candidates</button>
+            <button onclick="openSection('scheduler')">Scheduler</button>
+            <button onclick="openSection('chatbot')">Chatbot</button>
+        </aside>
+
+        <main class="main-content">
+            <section id="dashboard" class="section">
+                <div class="dashboard-header">
+                    <h2>Recruitment Dashboard</h2>
+                    <button class="refresh-btn" onclick="loadDashboardData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                
+                <div class="metrics-container" id="metricsContainer">
+                    <!-- Metrics will be loaded here -->
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="chart-card">
+                        <h3>Candidate Pipeline</h3>
+                        <canvas id="pipelineChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Open Positions</h3>
+                        <canvas id="positionsChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="activity-card">
+                    <h3>Recent Activity</h3>
+                    <ul id="activityList"></ul>
+                </div>
+            </section>
+
+            <section id="candidates" class="section">
+                <h2>Candidate Management</h2>
+                <div class="candidate-controls">
+                    <div class="search-box">
+                        <input type="text" id="candidateSearch" placeholder="Search candidates..." 
+                               oninput="filterCandidates()">
+                        <button onclick="loadCandidates()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="filter-options">
+                        <select id="statusFilter" onchange="filterCandidates()">
+                            <option value="">All Statuses</option>
+                            <option value="New">New</option>
+                            <option value="Screening">Screening</option>
+                            <option value="Interview Scheduled">Interview Scheduled</option>
+                            <option value="Hired">Hired</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="candidate-list" id="candidateList">
+                    <!-- Candidates will be loaded here -->
+                </div>
+            </section>
+
+            <section id="scheduler" class="section">
+                <h2><i class="fas fa-calendar-alt"></i> Interview Scheduler</h2>
+                <div class="scheduler-controls">
+                    <button onclick="createNewInterview()">
+                        <i class="fas fa-plus"></i> Schedule New
+                    </button>
+                </div>
+                <div class="scheduler-container">
+                    <div class="calendar-view">
+                        <div id="calendar"></div>
+                    </div>
+                    <div class="interview-list">
+                        <h3><i class="fas fa-list"></i> Upcoming Interviews (Next 7 Days)</h3>
+                        <div id="upcomingInterviews"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chatbot" class="section active">
+                <h2>Chatbot</h2>
+                <div id="chatbox"></div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off">
+                    <button onclick="sendMessage()">Send</button>
+                </div>
+            </section>
+        </main>
+    </div>  
+
+    <script>
+        // Global state
+        let currentCandidate = null;
+        let pipelineChart = null;
+        let positionsChart = null;
+        let calendar = null;
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCandidates();
+            loadDashboardData();
+            initScheduler();
+            
+            // Add welcome message
+            document.getElementById('chatbox').innerHTML = `
+                <div class="system-message">
+                    Talent Acquisition Assistant initialized. How can I help you today?
+                </div>
+            `;
+        });
+
+        // Handle Enter key in chat input
+        document.getElementById("chatInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function openSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Refresh data when section is opened
+            if (sectionId === 'candidates') {
+                loadCandidates();
+            } else if (sectionId === 'dashboard') {
+                loadDashboardData();
+            } else if (sectionId === 'scheduler') {
+                initScheduler();
+            }
+        }
+
+        // Dashboard functions
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('http://localhost:5000/api/dashboard');
+                const data = await response.json();
+                updateDashboardUI(data);
+                renderCharts(data);
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                document.getElementById('metricsContainer').innerHTML = `
+                    <div class="error-message">
+                        Failed to load dashboard data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function updateDashboardUI(data) {
+            // Update metrics
+            document.getElementById('metricsContainer').innerHTML = `
+                <div class="metric-card">
+                    <h3>Open Positions</h3>
+                    <div class="metric-value">${data.metrics.open_positions}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Candidates</h3>
+                    <div class="metric-value">${data.metrics.candidates_in_pipeline}</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Avg Hire Time</h3>
+                    <div class="metric-value">${data.metrics.avg_time_to_hire}d</div>
+                </div>
+                <div class="metric-card">
+                    <h3>Acceptance Rate</h3>
+                    <div class="metric-value">${data.metrics.offer_acceptance_rate}%</div>
+                </div>
+            `;
+            
+            // Update activity
+            const activityList = document.getElementById('activityList');
+            activityList.innerHTML = data.recent_activity.map(activity => `
+                <li>
+                    <span class="activity-text">${activity.action}</span>
+                    <span class="activity-meta">
+                        ${activity.position} • ${activity.time}
+                    </span>
+                </li>
+            `).join('');
+        }
+
+        function renderCharts(data) {
+            const pipelineCtx = document.getElementById('pipelineChart').getContext('2d');
+            const positionsCtx = document.getElementById('positionsChart').getContext('2d');
+            
+            // Destroy existing charts if they exist
+            if (pipelineChart) pipelineChart.destroy();
+            if (positionsChart) positionsChart.destroy();
+            
+            // Pipeline chart
+            pipelineChart = new Chart(pipelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: data.pipeline.map(stage => stage.stage),
+                    datasets: [{
+                        label: 'Candidates',
+                        data: data.pipeline.map(stage => stage.count),
+                        backgroundColor: '#ff6f00'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Positions chart
+            positionsChart = new Chart(positionsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.positions.map(pos => pos.title),
+                    datasets: [{
+                        data: data.positions.map(pos => pos.count),
+                        backgroundColor: [
+                            '#ff6f00', '#4caf50', '#2196f3', '#9c27b0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Candidate functions
+        async function loadCandidates() {
+            try {
+                const response = await fetch('http://localhost:5000/api/candidates');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                const candidateList = document.getElementById('candidateList');
+                candidateList.innerHTML = data.candidates.map(candidate => `
+                    <div class="candidate-card" onclick="selectCandidate(${candidate.id}, '${candidate.name.replace("'", "\\'")}')">
+                        <h3>${candidate.name}</h3>
+                        <span class="status-badge ${candidate.status.toLowerCase().replace(' ', '-')}">
+                            ${candidate.status}
+                        </span>
+                        <div class="candidate-details">
+                            <p>Skills: ${candidate.skills?.join(', ') || 'Not specified'}</p>
+                            <p>Applied: ${candidate.applied_date || 'Unknown'}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading candidates:', error);
+                document.getElementById('candidateList').innerHTML = `
+                    <div class="error-message">
+                        Candidate data not available. ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function filterCandidates() {
+            const searchTerm = document.getElementById('candidateSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const candidates = document.querySelectorAll('.candidate-card');
+            candidates.forEach(card => {
+                const name = card.querySelector('h3').textContent.toLowerCase();
+                const status = card.querySelector('.status-badge').textContent;
+                
+                const nameMatch = name.includes(searchTerm);
+                const statusMatch = !statusFilter || status === statusFilter;
+                
+                card.style.display = (nameMatch && statusMatch) ? 'block' : 'none';
+            });
+        }
+
+        function selectCandidate(candidateId, candidateName) {
+            currentCandidate = { id: candidateId, name: candidateName };
+            const chatbox = document.getElementById('chatbox');
+            
+            chatbox.innerHTML += `
+                <div class="system-message">
+                    Now discussing candidate: ${candidateName} (ID: ${candidateId})
+                </div>
+            `;
+            
+            openSection('chatbot');
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        // Scheduler functions
+        function initScheduler() {
+            const calendarEl = document.getElementById('calendar');
+            if (calendar) {
+                calendar.destroy();
+            }
+            
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: {
+                    url: 'http://localhost:5000/api/interviews',
+                    method: 'GET',
+                    failure: function() {
+                        console.error('Failed to load calendar events');
+                    }
+                },
+                eventClick: function(info) {
+                    showInterviewDetails(info.event);
+                }
+            });
+            calendar.render();
+            loadUpcomingInterviews();
+        }
+
+        async function loadUpcomingInterviews() {
+            try {
+                const response = await fetch('http://localhost:5000/api/interviews/upcoming');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error("Response wasn't JSON");
+                }
+                
+                const interviews = await response.json();
+                
+                const container = document.getElementById('upcomingInterviews');
+                container.innerHTML = interviews.map(interview => `
+                    <div class="interview-card">
+                        <h4>${interview.candidate_name}</h4>
+                        <p><i class="far fa-clock"></i> ${interview.time}</p>
+                        <p><i class="fas fa-briefcase"></i> ${interview.position}</p>
+                        <p>Type: ${interview.interview_type || 'N/A'}</p>
+                        <button onclick="cancelInterview(${interview.id})">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load interviews:', error);
+                const container = document.getElementById('upcomingInterviews');
+                container.innerHTML = `
+                    <div class="error-message">
+                        Failed to load interviews: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function showInterviewDetails(event) {
+            alert(`Interview Details:\nTitle: ${event.title}\nStart: ${event.start}\nEnd: ${event.end}`);
+        }
+
+        function cancelInterview(interviewId) {
+            if (confirm('Are you sure you want to cancel this interview?')) {
+                console.log(`Canceling interview ${interviewId}`);
+                // In a real app, you would make an API call here
+                loadUpcomingInterviews(); // Refresh the list
+            }
+        }
+
+        function createNewInterview() {
+            alert('This would open a form to schedule a new interview in a real application');
+            // Implementation would go here
+        }
+
+        // Chat functions
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const chatbox = document.getElementById('chatbox');
+            const userMessage = input.value.trim();
+
+            if (!userMessage) return;
+
+            // Add user message to chat
+            chatbox.innerHTML += `
+                <div class="message user-message">
+                    <div class="message-content">${userMessage}</div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            input.value = "";
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            try {
+                // Show loading indicator
+                const loadingId = 'loading-' + Date.now();
+                chatbox.innerHTML += `
+                    <div id="${loadingId}" class="message system-message">
+                        Assistant is thinking...
+                    </div>
+                `;
+                chatbox.scrollTop = chatbox.scrollHeight;
+
+                const response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: userMessage
+                    })
+                });
+
+                // Remove loading indicator
+                document.getElementById(loadingId)?.remove();
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Request failed');
+                }
+
+                const data = await response.json();
+                
+                // Add bot response
+                chatbox.innerHTML += `
+                    <div class="message bot-message">
+                        <div class="message-content">${data.response}</div>
+                        <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Chat error:', error);
+                chatbox.innerHTML += `
+                    <div class="message error-message">
+                        <div class="message-content">Error: ${error.message}</div>
+                    </div>
+                `;
+            } finally {
+                chatbox.scrollTop = chatbox.scrollHeight;
+            }
+        }
+    </script>
+    <script src="https://kit.fontawesome.com/4a7f44a380.js" crossorigin="anonymous"></script>
+</body>
+</html>
